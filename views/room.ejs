@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+
+    <style>
+      .container {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .column-container {
+        display: flex;
+        flex-direction: column;
+      }
+      .fa-microphone-slash {
+        color: red; /* Customize the color for the disabled mic icon */
+      }
+      .fa-video {
+        color: red; /* Customize the color for the disabled video icon */
+      }
+
+      /* Increase the size of icons */
+      .fas {
+        font-size: 24px;
+        margin-right: 10px; /* Add space between icons */
+      }
+
+      /* Keep input box and buttons in a single line */
+      #button-container {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      #message-input {
+        flex-grow: 1;
+      }
+
+      .button {
+        animation-duration: 0.3s;
+        animation-fill-mode: forwards;
+      }
+
+      @keyframes buttonAnimation {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(0.9);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      /* Style buttons */
+      .button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        background-color: #4caf50;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .button:hover {
+        background-color: #45a049;
+      }
+
+      /* Style input and upload tags */
+      input[type="text"],
+      input[type="file"] {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+        transition: border-color 0.3s ease;
+      }
+
+      input[type="text"]:focus,
+      input[type="file"]:focus {
+        border-color: #4caf50;
+      }
+
+      /* Style upload button */
+      .upload {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        background-color: #2196f3;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .upload:hover {
+        background-color: #0b7dda;
+      }
+
+      /* Styling for the Generate button */
+      .generate {
+        display: inline-block;
+        padding: 8px 16px;
+        background-color: #ff9800;
+        color: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+
+        /* Animation */
+        transition: background-color 0.3s ease;
+      }
+
+      .generate:hover {
+        background-color: #ff6f00;
+      }
+
+      /* Styling for the Choose file button */
+      .selectpdf-label {
+        position: relative;
+      }
+
+      .selectpdf-label input[type="file"] {
+        display: none;
+      }
+
+      .selectpdf-label span {
+        display: inline-block;
+        padding: 8px 16px;
+        background-color: #2196f3;
+        color: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+
+        /* Animation */
+        transition: background-color 0.3s ease;
+      }
+
+      .selectpdf-label span:hover {
+        background-color: #1976d2;
+      }
+      #button-container > * {
+        margin-right: 10px;
+        margin-bottom: 10px;
+      }
+
+      .row-container {
+        display: flex;
+        align-items: center;
+      }
+
+      .loader-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .loader {
+        border: 4px solid #f3f3f3; /* Light gray border */
+        border-top: 4px solid #3498db; /* Blue border */
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 2s linear infinite;
+        margin-left: 10px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+
+    <script>
+      const ROOM_ID = "<%= roomId %>";
+    </script>
+    <script
+      defer
+      src="https://unpkg.com/peerjs@1.2.0/dist/peerjs.min.js"
+    ></script>
+    <script src="/socket.io/socket.io.js" defer></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"
+      integrity="sha512-ml/QKfG3+Yes6TwOzQb7aCNtJF4PUyha6R3w8pSTo/VJSywl7ZreYvvtUso7fKevpsI+pYVVwnu82YO0q3V6eg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script defer src="face-api.min.js"></script>
+    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="style.css" />
+
+    <title>Document</title>
+  </head>
+  <body>
+    <div class="container">
+      <div id="video-grid"></div>
+      <div class="column-container">
+        <div id="button-container">
+          <i
+            id="camera-icon"
+            class="fas fa-camera"
+            onclick="toggleCamera()"
+          ></i>
+          <i id="mic-icon" class="fas fa-microphone" onclick="toggleMic()"></i>
+          <button id="skip-button" class="button" onclick="skipToNewRoom()">
+            Skip
+          </button>
+          <label for="selectpdf" class="selectpdf-label">
+            <input type="file" id="selectpdf" class="selectpdf" />
+            <span>Choose file</span>
+          </label>
+          <button class="upload">Upload</button>
+
+          <button class="generate">Send</button>
+
+          <div class="input-button-container">
+            <input
+              type="text"
+              id="message-input"
+              placeholder="Type your message..."
+            />
+            <button id="send-button" class="button" onclick="sendMessage()">
+              Send
+            </button>
+          </div>
+        </div>
+        <div id="message-container">
+          <div id="popup-background" class="popup-background">
+            <div class="popup">
+              <div class="row-container">
+                <h2>Looking for Online Users</h2>
+                <div class="loader-row">
+                  <div class="loader"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="disconnect-popup" style="display: none">
+            User disconnected.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.peerjs.com/1.4.2/peer.min.js"></script>
+    <script>
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+      let pdfinput = document.querySelector(".selectpdf");
+
+      let upload = document.querySelector(".upload");
+      let generate = document.querySelector(".generate");
+
+      upload.addEventListener("click", () => {
+        let file = pdfinput.files[0];
+        if (file != undefined && file.type == "application/pdf") {
+          let fr = new FileReader();
+          fr.readAsDataURL(file);
+          fr.onload = () => {
+            let res = fr.result;
+
+            extractText(res, false);
+          };
+        }
+      });
+      var alltext = "";
+
+      async function extractText(url, pass) {
+        try {
+          let pdf;
+
+          pdf = await pdfjsLib.getDocument(url).promise;
+
+          let pages = pdf.numPages;
+          for (let i = 1; i <= pages; i++) {
+            let page = await pdf.getPage(i);
+            let txt = await page.getTextContent();
+            let text = txt.items.map((s) => s.str).join("");
+            alltext += text + "\n";
+          }
+          console.log(alltext);
+        } catch (err) {
+          alert(err.message);
+        }
+      }
+      var sentencesList = "";
+
+      generate.addEventListener("click", () => {
+        const OPENAI_API_KEY =
+          "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";
+
+        fetch("https://api.openai.com/v1/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "text-davinci-003",
+            prompt:
+              "Create a list of 8 questions from skills and experience in this text: " +
+              alltext,
+            temperature: 0.5,
+            max_tokens: 150,
+            top_p: 1.0,
+            frequency_penalty: 0.0,
+            presence_penalty: 0.0,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const text = data.choices[0].text;
+            const sentences = text.trim().split("\n");
+
+            for (let i = 0; i < sentences.length; i++) {
+              sentencesList += sentences[i];
+            }
+
+            console.log(sentencesList);
+            socket.emit("send-message", roomId, sentencesList);
+          })
+          .catch((error) => console.error(error));
+      });
+    </script>
+  </body>
+</html>
