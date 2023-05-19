@@ -2,7 +2,14 @@ const express = require("express");
 const app = express();
 const server = require("http").Server(app);
 const io = require("socket.io")(server);
-const ngrok = require("ngrok");
+const { ExpressPeerServer } = require('peer');
+const peerServer = ExpressPeerServer(server, {
+  debug: true
+});
+
+
+
+app.use("/peerjs", peerServer);
 
 const rooms = [
   "75cf7c66",
